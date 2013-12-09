@@ -1,0 +1,130 @@
+<?php
+/**
+ * @file
+ *   Provides a custom formatter for taxonomy terms allowing custom URL with
+ *   placeholders/tokens
+ */
+
+/**
+ * Implements hook_field_formatter_info().
+ */
+function term_link_token_field_formatter_info() {
+  $i18n = module_exists('i18n_taxonomy');
+  return array(
+    'term_link_token' => array(
+      'label' => $i18n ? "Link (localized, with tokens)" : "Link (with tokens)",
+      'field types' => array('taxonomy_term_reference'),
+      'settings' => array(
+        'taxonomy_term_link' => 'taxonomy_term/[taxonomy_term:tid]',
+      ),
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_formatter_prepare_view().
+ *
+ * This preloads all taxonomy terms for multiple loaded objects at once and
+ * unsets values for invalid terms that do not exist.
+ */
+function term_link_token_field_formatter_prepare_view($entity_type, $entities, $field, $instances, $langcode, &$items, $displays) {
+  return taxonomy_field_formatter_prepare_view($entity_type, $entities, $field, $instances, $langcode, $items, $displays);
+}
+
+/**
+ * Implements hook_field_formatter_settings_form().
+ */
+function term_link_token_field_formatter_settings_form($field, $instance, $view_mode, $form, &$form_state) {
+  $display = $instance['display'][$view_mode];
+  $settings = $display['settings'];
+
+  $element['taxonomy_term_link'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Term link'),
+    '#description' => t('Path where each term should link. Following tokens can be used: [taxonomy_term:tid], [taxonomy_term:name], [taxonomy_term:vid]'),
+    '#default_value' => $settings['taxonomy_term_link'],
+  );
+
+  $element['taxonomy_term_link_tokens'] = array(
+    '#theme' => 'token_tree',
+    '#token_types' => array('term'),
+    '#global_types' => true,
+    '#click_insert' => true,
+  );
+
+  return $element;
+}
+
+/**
+ * Implements hook_field_formatter_view().
+ *
+ * Based on i18n_taxonomy_field_formatter_view()
+ */
+function term_link_token_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+  $element = array();
+  $i18n = module_exists('i18n_taxonomy');
+  $language = $i18n ? i18n_language_interface() : null;
+
+  // Terms whose tid is 'autocreate' do not exist
+  // yet and $item['taxonomy_term'] is not set. Theme such terms as
+  // just their name.
+
+  switch ($display['type']) {
+    case 'term_link_token':
+      foreach ($items as $delta => $item) {
+        if ($item['tid'] == 'autocreate') {
+          $element[$delta] = array(
+            '#markup' => check_plain($item['name']),
+          );
+        }
+        else {
+          $term = $item['taxonomy_term'];
+          // Build the token using tokens
+          $url = token_replace(
+            $display['settings']['taxonomy_term_link'],
+            array('taxonomy_term' => $item['taxonomy_term']),
+            array('sanitze' => true)
+          );
+          $uri = _term_link_token_preprocess_url($url);
+          $uri = drupal_parse_url($url);
+          // Term name (localized)
+          $term_name = $i18n ? i18n_taxonomy_term_name($term, $language->language) : $term->name;
+          $element[$delta] = array(
+            '#type' => 'link',
+            '#title' => $term_name,
+            '#href' => $uri['path'],
+            '#options' => $uri,
+          );
+        }
+      }
+      break;
+  }
+
+  $element[] = array('#markup' => 'asdasdada');
+  return $element;
+}
+
+/**
+ * Preprocess a string representing an url
+ *
+ * @param string $url
+ *   URL to split
+ *
+ * @return array
+ *   URL components:
+ *     - path
+ *     - query
+ *     - options
+ */
+function _term_link_token_preprocess_url($url) {
+  //list($path, $query) = explode('?', $url, 2);
+  //list($query, $fragment) = explode('#', $query, 2);
+  //
+  //return array(
+  //  'path' => $path,
+  //  'options' => array(
+  //    'query' => array(),
+  //    'fragment' => '',
+  //  ),
+  //);
+}

@@ -1,0 +1,6 @@
+name = Term Link Formatter
+description = Provides a custom formatter for taxonomy terms allowing custom URL with placeholders
+core = 7.x
+
+dependencies[] = taxonomy
+dependencies[] = token
