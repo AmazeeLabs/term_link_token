@@ -41,7 +41,7 @@ function term_link_token_field_formatter_settings_form($field, $instance, $view_
   $element['taxonomy_term_link'] = array(
     '#type' => 'textfield',
     '#title' => t('Term link'),
-    '#description' => t('Path where each term should link. Following tokens can be used: [taxonomy_term:tid], [taxonomy_term:name], [taxonomy_term:vid]'),
+    '#description' => t('Path where each term should link. All available tokens can be found below.'),
     '#default_value' => $settings['taxonomy_term_link'],
   );
 
