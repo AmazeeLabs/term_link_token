@@ -79,16 +79,22 @@ function term_link_token_field_formatter_view($entity_type, $entity, $field, $in
         }
         else {
           $term = $item['taxonomy_term'];
-          // Build the token using tokens
+
+          // Build the URL using tokens
           $url = token_replace(
             $display['settings']['taxonomy_term_link'],
             array('taxonomy_term' => $item['taxonomy_term']),
             array('sanitze' => true)
           );
-          $uri = _term_link_token_preprocess_url($url);
+
+          // Split URL so we can use url() or theme link. This works with
+          // external URL as well, even if documentation states otherwise.
           $uri = drupal_parse_url($url);
+
           // Term name (localized)
           $term_name = $i18n ? i18n_taxonomy_term_name($term, $language->language) : $term->name;
+
+          // Output
           $element[$delta] = array(
             '#type' => 'link',
             '#title' => $term_name,
@@ -100,31 +106,5 @@ function term_link_token_field_formatter_view($entity_type, $entity, $field, $in
       break;
   }
 
-  $element[] = array('#markup' => 'asdasdada');
   return $element;
-}
-
-/**
- * Preprocess a string representing an url
- *
- * @param string $url
- *   URL to split
- *
- * @return array
- *   URL components:
- *     - path
- *     - query
- *     - options
- */
-function _term_link_token_preprocess_url($url) {
-  //list($path, $query) = explode('?', $url, 2);
-  //list($query, $fragment) = explode('#', $query, 2);
-  //
-  //return array(
-  //  'path' => $path,
-  //  'options' => array(
-  //    'query' => array(),
-  //    'fragment' => '',
-  //  ),
-  //);
 }
